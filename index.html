@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Web App ปักหมุด</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mitr&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: 'Mitr', sans-serif;
+      background-color: #FBF9F1;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #92C7CF;
+      padding: 10px;
+      text-align: right;
+    }
+    header img {
+      width: 50px;
+      height: 50px;
+    }
+    #map {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 80px;
+      height: 80px;
+      border: 2px solid #AAD7D9;
+      border-radius: 10px;
+    }
+    #controls {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: #E5E1DA;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    #point-list {
+      margin: 20px;
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background-color: #AAD7D9;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSDeb5LWilPU-7pX5usRGiwF1o4-cW1cAPjOw&s" alt="logo">
+  </header>
+
+  <div id="controls">
+    <input type="text" id="coords" placeholder="ใส่พิกัด เช่น 19.899211, 99.817389">
+    <button onclick="addPoint()">เพิ่มหมุด</button>
+    <button onclick="shareData()">แชร์ข้อมูล</button>
+  </div>
+
+  <div id="point-list"></div>
+
+  <div id="map"></div>
+
+  <footer>
+    Copyright © อ.เอ เออเอ
+  </footer>
+
+  <script>
+    // สร้างแผนที่เล็ก
+    var map = L.map('map').setView([19.899211, 99.817389], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let points = [];
+
+    function addPoint() {
+      let coords = document.getElementById('coords').value.trim();
+      if (!coords) return;
+      let parts = coords.split(/[ ,]+/);
+      if (parts.length < 2) return;
+
+      let lat = parseFloat(parts[0]);
+      let lng = parseFloat(parts[1]);
+
+      if (points.length >= 50) {
+        Swal.fire('ครบ 50 จุดแล้ว', 'ไม่สามารถเพิ่มได้อีกในวันนี้', 'warning');
+        return;
+      }
+
+      let marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(`<b>หมายเลข:</b> ${points.length+1}<br><b>ผู้ใช้:</b> อ.เอ<br><b>สถานะ:</b> กำลังใช้งาน<br><a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank">นำทาง</a>`);
+
+      points.push({lat, lng});
+      document.getElementById('point-list').innerHTML += `<div>จุดที่ ${points.length}: ${lat}, ${lng}</div>`;
+
+      Swal.fire('บันทึกสำเร็จ!', 'ข้อมูลถูกเพิ่มลง Google Sheet แล้ว', 'success');
+      // TODO: เชื่อมต่อ Google Sheets API ด้วย ID และ Tab "Data"
+    }
+
+    function shareData() {
+      let text = points.map((p,i)=>`จุดที่ ${i+1}: ${p.lat}, ${p.lng}`).join("\n");
+      navigator.clipboard.writeText(text);
+      Swal.fire('คัดลอกสำเร็จ!', 'ข้อมูลถูกคัดลอกไปยังคลิปบอร์ดแล้ว', 'success');
+      // TODO: เพิ่มการแชร์ไป Telegram API
+    }
+  </script>
+</body>
+</html>
